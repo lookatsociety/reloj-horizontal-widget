@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Widget de Reloj</title>
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background-color: #191919; /* Modo oscuro por defecto */
+            transition: background-color 0.3s;
+        }
+
+        .container {
+            position: relative;
+        }
+
+        .clock-widget {
+            width: 300px; /* Tamaño del widget */
+            height: 100px; /* Tamaño del widget */
+            border-radius: 15px; /* Esquinas redondeadas */
+            background-color: #1f1f1f; /* Fondo oscuro por defecto */
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Sombra detrás */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            color: #fff; /* Color del texto */
+            text-align: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .date {
+            font-size: 16px;
+            margin-top: 5px;
+        }
+
+        .toggle-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 30px;
+            height: 30px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .light-mode .clock-widget {
+            background-color: #fff;
+            color: #333;
+        }
+
+        .light-mode {
+            background-color: #f0f0f0;
+        }
+
+        .light-mode .toggle-button {
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+        .menu-button {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            width: 30px;
+            height: 30px;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            cursor: pointer;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: background-color 0.3s, color 0.3s;
+        }
+
+        .menu {
+            display: none;
+            position: absolute;
+            top: 50px;
+            left: 10px;
+            background-color: #1f1f1f;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+            padding: 10px;
+        }
+
+        .menu.show {
+            display: block;
+        }
+
+        .menu select {
+            width: 100%;
+            margin: 5px 0;
+            background-color: #333;
+            color: #fff;
+            border: none;
+            padding: 5px;
+            border-radius: 5px;
+        }
+
+        .menu select option {
+            background-color: #333;
+            color: #fff;
+        }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.4/moment.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment-timezone/0.5.37/moment-timezone-with-data.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <div class="clock-widget" id="clock-widget">
+            <div id="clock">
+                <!-- La hora actual se actualizará aquí -->
+            </div>
+            <div class="date" id="date">
+                <!-- La fecha actual se actualizará aquí -->
+            </div>
+        </div>
+        <button class="toggle-button" id="toggle-btn">&#9788;</button>
+        <button class="menu-button" id="menu-btn">&#9776;</button>
+        <div class="menu" id="menu">
+            <select class="timezone-selector" id="timezone-selector">
+                <!-- Opciones de zonas horarias se agregarán aquí -->
+            </select>
+        </div>
+    </div>
+
+    <script>
+        // Lista completa de zonas horarias
+        const timezones = moment.tz.names().map(name => ({
+            label: name,
+            value: name
+        }));
+
+        function updateClock() {
+            const timezone = localStorage.getItem('timezone') || 'UTC';
+            const now = moment.tz(timezone);
+
+            // Ajuste manual para México si es necesario
+            if (timezone === 'America/Mexico_City') {
+                const offset = now.utcOffset() - (6 * 60); // Ajuste específico para la Ciudad de México
+                now.subtract(offset, 'minutes');
+            }
+
+            const hours = now.format('HH');
+            const minutes = now.format('mm');
+            const seconds = now.format('ss');
+            const day = now.format('DD');
+            const month = now.format('MM');
+            const year = now.format('YYYY');
+
+            document.getElementById('clock').textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('date').textContent = `${day}/${month}/${year}`;
+        }
+
+        function loadSettings() {
+            const lightMode = localStorage.getItem('lightMode');
+            if (lightMode === 'true') {
+                document.body.classList.add('light-mode');
+                document.getElementById('toggle-btn').innerHTML = '&#9790;';
+            }
+            const savedTimezone = localStorage.getItem('timezone');
+            if (savedTimezone) {
+                document.getElementById('timezone-selector').value = savedTimezone;
+            }
+        }
+
+        function saveSettings() {
+            const lightMode = document.body.classList.contains('light-mode');
+            localStorage.setItem('lightMode', lightMode);
+            const timezone = document.getElementById('timezone-selector').value;
+            localStorage.setItem('timezone', timezone);
+        }
+
+        document.getElementById('toggle-btn').addEventListener('click', () => {
+            document.body.classList.toggle('light-mode');
+            const toggleBtn = document.getElementById('toggle-btn');
+            if (document.body.classList.contains('light-mode')) {
+                toggleBtn.innerHTML = '&#9790;'; // Icono de noche
+            } else {
+                toggleBtn.innerHTML = '&#9788;'; // Icono de día
+            }
+            saveSettings();
+        });
+
+        document.getElementById('timezone-selector').addEventListener('change', () => {
+            saveSettings();
+            updateClock();
+        });
+
+        function populateTimezones() {
+            const selector = document.getElementById('timezone-selector');
+            timezones.forEach(tz => {
+                const option = document.createElement('option');
+                option.value = tz.value;
+                option.textContent = tz.label;
+                selector.appendChild(option);
+            });
+        }
+
+        populateTimezones();
+        loadSettings();
+        setInterval(updateClock, 1000); // Actualiza el reloj cada segundo
+        updateClock(); // Inicializa el reloj al cargar la página
+
+        document.getElementById('menu-btn').addEventListener('click', () => {
+            document.getElementById('menu').classList.toggle('show');
+        });
+    </script>
+</body>
+</html>
